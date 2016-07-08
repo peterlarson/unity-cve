@@ -45,6 +45,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Unity Scripts\AbstractNetworkingChildScript.cs" />
+     <Compile Include="Assets\Unity Scripts\NetworkingChildScriptExample.cs" />
+     <Compile Include="Assets\Unity Scripts\NetworkingScript.cs" />
      <Compile Include="Assets\Unity_CVE\Data.cs" />
      <Compile Include="Assets\Unity_CVE\ExtraParam.cs" />
      <Compile Include="Assets\Unity_CVE\FlatBuffers\ByteBuffer.cs" />
