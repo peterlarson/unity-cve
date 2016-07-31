@@ -89,7 +89,7 @@ Solution:
 How to use. 
 
     Compile and run bridge. 
-        ant build
+        ant
         ant Bridge_Controller -Darg0=[CVE hostname] -Darg1=[Unity hostname]
 
     How to add to a unity game

@@ -196,7 +196,7 @@ public class NetworkingScript : MonoBehaviour {
 
 
         //TIP: Below are examples of how you can manually send messages to the Unity CVE bridge. 
-        sendLocation(1, 2, 3, "CH0");
+        //sendLocation(1, 2, 3, "CH0");
         //sendPosition(4, 5, 6, 7, 0, 9, "CH0");
         //sendOrientation(10, 11, 12, "CH0");
         //sendExtraParam("test", 13, "CH0");
