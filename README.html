@@ -1,0 +1,120 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Untitled Document.md</title><style></style></head><body id="preview">
+<h1><a id="UnityCVE_bridge_0"></a>Unity-CVE bridge</h1>
+<p><strong>CVE</strong> stands for collaborative virtual environment, and is a system developed by Michael Cohen’s lab at the university of aizu.
+CVE communication takes place through Java serialized objects, so communication can happen easily on platforms that support Java,
+but requires some form of middleware to communicate with non-Java programs.
+CVE communicates using four kinds of messages. Positions, Orientations, Locatinos, and one called Extra Paramter.</p>
+<ul>
+<li>Location is the x, y, z coordinates of an object without any units.</li>
+<li>Orientation is the roll, pitch, yaw that determine orientation.</li>
+<li>Position is a message containing both location and orientation, but because each message has only one of these four types a Position message is not
+a separate Location message and Orientation message. Instead it is a single message that conveys the same data of parameters x, y, z, roll, pitch, yaw.</li>
+<li>Extra Parameter is intended to be used to send other things through CVE. This message contains a string parameter and a float parameter to identify and
+provide the extra value.</li>
+</ul>
+<p><strong>Unity</strong> is a modern game engine that allows deployment to different platforms including a web player, webgl, Windows, Mac, Ios, Android and more.
+Code for unity is not written in Java, but because it is multiplatform it is a good candidate for inclusion with CVE.</p>
+<p>This project allows multichannel, bidirectional communication between Unity and CVE.</p>
+<h2><a id="Solution_18"></a>Solution:</h2>
+<p>CVE uses a client-server model, and so the end goal of this connection is to allow unity games to communicate as clients with the CVE server.
+There are two components to the solution used in this project.
+There is a bridge program written in Java that communicates with the CVE server and with Unity, and there is code written for Unity (scripts)
+that let Unity communicate with the bridge.</p>
+<h3><a id="Bridge_Program_25"></a>Bridge Program</h3>
+<p>The bridge program is written in Java to communicate with Unity and with the CVE server.
+The protocols used for communicating with Unity and the CVE server are different, and so they were designed to use separate classes.</p>
+<p>The main class of the bridge program, called Bridge_Controller, starts the program by creating one object for communicating with Unity,
+and an object for each CVE channel that communication will take place on. Currently it opens channels with the names CH0, CH1, … CH6.
+Each object that is created is given a reference to the parent object, the Bridge_Controller, in order to facilitate communication between the two classes.</p>
+<h4><a id="The_Bridge_Controller_33"></a>The Bridge_Controller</h4>
+<p>The Bridge_Controller has 8 methods used for communication between the CVE component and the Unity component.
+4 of these methods are for the 4 kinds of messages recieved by the CVE component to be relayed to Unity, and
+4 of these methods are from Unity to relay to the CVE component.</p>
+<h4><a id="CVE_component_38"></a>CVE component</h4>
+<p>This class handles communication between the Bridge and the CVE server by creating a CVEClient object, and calling methods on that
+object to send messages to the server, and having messages called on it through the CVEClientIF interface from the CVEClient object when
+they are recieved from the CVE server.
+The CVE component class implements the CVEClientIF interface that allows it to recieve messages from a CVE client object.
+Each CVE component object can communicate on only one channel at a time, so in order to set up multichannel communication the Bridge
+Controller instantiates multiple CVE components. Each for the same server but a different channel.</p>
+<h4><a id="Unity_component_46"></a>Unity component.</h4>
+<p>Class that communicates with Unity. Sends messages encoded as flatbuffers to the IP address provided. Listens for messages on an open
+socket and parses them before sending the data to the parent Bridge_Controller object.
+Communication happens using FlatBuffer objects. A discussion of this takes place in the Flabuffers section below.</p>
+<h3><a id="Unity_scripts_51"></a>Unity scripts.</h3>
+<p>Inside unity the solution is set up in the following way. A single networking script attached to any game object (empty objects in the
+samples) handles all of the communication between the bridge and Unity. This script has references to the objects that will be on each
+channel, and passes messages to scripts attached to those objects. Objects that will send or recieve data, called Child objects, are
+associated with scripts</p>
+<h4><a id="Networking_Script_58"></a>Networking Script</h4>
+<p>This is the main networking class. This script handles communication with scripts attached to other objects in unity,
+Encoding and decoding from the FlatBuffers format, and UDP-based communication with the unity CVE server. This class
+should not require modifications to use.
+The code will listen on the provided port for UDP packets with CVE data, and it will send to the specified server at the
+specified port.</p>
+<h4><a id="Abstract_Child_Script_65"></a>Abstract Child Script</h4>
+<p>The code for communication with the Networking Script is located in an abstract class, so Child Scripts should extend this class.
+This means that the actual code that must be written by the programmer is very small.</p>
+<p>The abstract class requires some methods be overloaded to handle messages sent to that object asynchronously. To send messages to the
+CVE server, a call to base.sendXXXX() can be made where XXXX is location, position, orientation, or extra parameter.</p>
+<h3><a id="Flatbuffers_72"></a>Flatbuffers</h3>
+<p>Communication between the bridge server and Unity is done through UDP packets. The data in the packets is encoded as a FlatBuffer.
+<a href="https://google.github.io/flatbuffers/">https://google.github.io/flatbuffers/</a>
+FlatBuffers is intended to be a fast, cross platform serialization library. Further modification to the Encoding and Decoding should
+not be needed, but just in case the schema, named CVE_types.fbs, and a copy of the flatbuffers compiler is provided in the directory FlatBuffers.</p>
+<h3><a id="Ant_78"></a>Ant</h3>
+<p>Ant, <a href="http://ant.apache.org/">http://ant.apache.org/</a>, is used to compile and run the Bridge component of the project.</p>
+<h2><a id="How_to_use_81"></a>How to use:</h2>
+<ul>
+<li>
+<p><strong>Compile and run bridge</strong></p>
+<ul>
+<li>ant</li>
+<li>ant Bridge_Controller -Darg0=[CVE hostname] -Darg1=[Unity hostname]</li>
+</ul>
+</li>
+<li>
+<p><strong>Add to a unity game</strong></p>
+<ul>
+<li>
+<p>Add unity networking scripts to the Unity project.</p>
+<ul>
+<li>NetworkingScript.cs and AbstractNetworkingChildScript.cs are required.</li>
+<li>NetworkingChildScriptScriptExample.cs is an optional start for your child script.</li>
+</ul>
+</li>
+<li>
+<p>Add FlatBuffers code to the project.</p>
+<ul>
+<li>All needed code is in the unity-code/cve-flatbuffers-encoding directory.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Set up custom child script</strong></p>
+<ul>
+<li>NetworkingChildScriptScriptExample.cs can be a starting point for your code. You will define when to send messages to the CVE server, and what to do when you recieve them. More detailed instructions are in the example.</li>
+</ul>
+</li>
+<li>
+<p><strong>Attach custom child scripts to game objets</strong></p>
+<ul>
+<li>Attach the script to each game object that you wish to connect to the CVE server. There is a maximum of one object per channel. If you wish to have multiple objects on one channel you can have the connected object be an empty parent of the child objects you want to control.</li>
+</ul>
+</li>
+<li>
+<p><strong>Configure NetworkingScript</strong></p>
+<ul>
+<li>Attach the NetworkingScript to any object in your code. In the examples an empty object is used. Set up the relationship between each game object and each channel by draggint the objects into the script variable in the inspector. Also in the inspector, set up the server IP, and the ports to send to and listen on.</li>
+</ul>
+</li>
+<li>
+<p><strong>Run and Enjoy</strong></p>
+<ul>
+<li>As soon as the game starts Unity will begin to listen for incoming packets, and whenever any of your child objects sends a message it will be relayed to the IP of the Bridge Server.</li>
+</ul>
+</li>
+</ul>
+
+</body></html>
